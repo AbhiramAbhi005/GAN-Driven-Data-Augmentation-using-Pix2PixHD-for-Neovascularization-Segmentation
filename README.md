@@ -179,6 +179,38 @@ Pix2PixHD Generator
      v
 Synthetic Fundus Image
 ```
+## Pix2PixHD Configuration
+
+The Pix2PixHD implementation was configured for 512 × 512 retinal fundus images.
+
+The implementation used a simplified Pix2PixHD architecture consisting of:
+
+- Global Generator
+- Multi-scale Discriminator
+- L1 reconstruction loss
+- Adversarial GAN loss
+- Adam optimizer
+
+The Local Enhancer component of the original Pix2PixHD architecture was omitted because the target image resolution was 512 × 512.
+
+The main training configuration was:
+
+| **Parameter** | **Value** |
+|---|---|
+| Image Resolution | 512 × 512 |
+| Generator | Global Generator |
+| Discriminator | Multi-scale Discriminator |
+| GAN Training Epochs | 60 |
+| Optimizer | Adam |
+| Learning Rate | 0.0002 |
+| Beta 1 | 0.5 |
+| Beta 2 | 0.999 |
+| L1 Loss Weight (λ) | 10.0 |
+| Mask Noise (σ) | 0.05 |
+
+The trained generator was subsequently used to produce 100 synthetic fundus images for dataset augmentation.
+
+---
 # GAN-Augmented Dataset
 
 A total of **100 synthetic fundus images** were generated using **Pix2PixHD**.
@@ -233,6 +265,25 @@ The segmentation model was evaluated on **30 independent real fundus images** th
 
 ---
 
+## U-Net Configuration
+
+The segmentation model uses a U-Net encoder-decoder architecture with skip connections for preserving spatial information.
+
+The configured U-Net contains approximately **31 million trainable parameters**.
+
+The encoder consists of four downsampling stages with:
+
+- 64 filters
+- 128 filters
+- 256 filters
+- 512 filters
+
+Each encoder block uses convolutional layers followed by Batch Normalization and ReLU activation, with 2 × 2 max pooling used for downsampling.
+
+The model was trained using a hybrid **Binary Cross-Entropy (BCE) + Dice loss** to address the severe class imbalance between neovascular and non-neovascular pixels.
+
+---
+
 # Baseline and GAN-Augmented Comparison
 
 To determine the effectiveness of Pix2PixHD-based augmentation, two U-Net models were compared.
@@ -264,15 +315,15 @@ This controlled comparison was performed to determine whether the addition of GA
 
 The segmentation models were evaluated using the following metrics:
 
-| Metric                                   | Description                                                                                                                            |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Accuracy**                             | Measures the overall percentage of correctly classified pixels.                                                                        |
-| **Dice Coefficient**                     | Measures the spatial overlap between the predicted segmentation and the ground-truth mask.                                             |
-| **Intersection over Union (IoU)**        | Measures the intersection between predicted and ground-truth regions relative to their union.                                          |
-| **Sensitivity**                          | Measures the ability of the model to correctly detect neovascularization pixels.                                                       |
-| **Specificity**                          | Measures the ability of the model to correctly identify non-neovascular pixels.                                                        |
-| **ROC-AUC**                              | Measures the model's ability to distinguish between neovascular and non-neovascular pixels across different classification thresholds. |
-| **Precision-Recall / Average Precision** | Evaluates performance on the minority neovascularization class, particularly under severe class imbalance.                             |
+| **Metric** | **Description** |
+|---|---|
+| **Accuracy** | Measures the overall percentage of correctly classified pixels. |
+| **Dice Coefficient** | Measures the spatial overlap between the predicted segmentation and the ground-truth mask. |
+| **Intersection over Union (IoU)** | Measures the intersection between predicted and ground-truth regions relative to their union. |
+| **Sensitivity** | Measures the ability of the model to correctly detect neovascularization pixels. |
+| **Specificity** | Measures the ability of the model to correctly identify non-neovascular pixels. |
+| **ROC-AUC** | Measures the model's ability to distinguish between neovascular and non-neovascular pixels across different classification thresholds. |
+| **Precision-Recall / Average Precision** | Evaluates performance on the minority neovascularization class, particularly under severe class imbalance. |
 
 ---
 
@@ -282,15 +333,14 @@ The Pix2PixHD generator produced synthetic fundus images with good structural an
 
 The main synthesis quality results were:
 
-| Metric    |          Result |
-| --------- | --------------: |
-| **PSNR**  | 29.40 ± 1.73 dB |
-| **SSIM**  | 0.7948 ± 0.0217 |
-| **MSE**   |   81.49 ± 40.09 |
-| **MAE**   |     6.16 ± 1.39 |
+| **Metric** | **Result** |
+|---|---:|
+| **PSNR** | 29.40 ± 1.73 dB |
+| **SSIM** | 0.7948 ± 0.0217 |
+| **MSE** | 81.49 ± 40.09 |
+| **MAE** | 6.16 ± 1.39 |
 | **LPIPS** | 0.1575 ± 0.0398 |
-| **FID**   |           57.45 |
-
+| **FID** | 57.45 |
 These results indicate that the generated images maintained anatomical structure and realistic visual characteristics while introducing additional variation into the training data.
 
 ---
@@ -299,15 +349,15 @@ These results indicate that the generated images maintained anatomical structure
 
 The U-Net model trained using the GAN-augmented dataset achieved the following results on the independent test set:
 
-| Metric                | Mean ± Standard Deviation |
-| --------------------- | ------------------------: |
-| **Accuracy**          |           0.9743 ± 0.0089 |
-| **Dice Coefficient**  |           0.7144 ± 0.0912 |
-| **IoU**               |           0.5635 ± 0.1023 |
-| **Sensitivity**       |           0.8370 ± 0.0734 |
-| **Specificity**       |           0.9819 ± 0.0048 |
-| **ROC-AUC**           |                    0.9540 |
-| **Average Precision** |                    0.7534 |
+| **Metric** | **Mean ± Standard Deviation** |
+|---|---:|
+| **Accuracy** | 0.9743 ± 0.0089 |
+| **Dice Coefficient** | 0.7144 ± 0.0912 |
+| **IoU** | 0.5635 ± 0.1023 |
+| **Sensitivity** | 0.8370 ± 0.0734 |
+| **Specificity** | 0.9819 ± 0.0048 |
+| **ROC-AUC** | 0.9540 |
+| **Average Precision** | 0.7534 |
 
 The results demonstrate that the model achieved strong pixel-level classification and reliable detection of neovascularization while maintaining very high specificity.
 
@@ -317,13 +367,13 @@ The results demonstrate that the model achieved strong pixel-level classificatio
 
 The comparison between the baseline U-Net and GAN-augmented U-Net demonstrated improvements across all major segmentation metrics.
 
-| Metric               | Baseline U-Net | U-Net + Pix2PixHD | Relative Improvement |
-| -------------------- | -------------: | ----------------: | -------------------: |
-| **Accuracy**         |         0.9704 |            0.9743 |                +0.4% |
-| **Dice Coefficient** |         0.6733 |            0.7144 |                +6.1% |
-| **IoU**              |         0.5127 |            0.5635 |                +9.9% |
-| **Sensitivity**      |         0.8321 |            0.8370 |                +0.6% |
-| **Specificity**      |         0.9784 |            0.9819 |                +0.4% |
+| **Metric** | **Baseline U-Net** | **U-Net + Pix2PixHD** | **Relative Improvement** |
+|---|---:|---:|---:|
+| **Accuracy** | 0.9704 | 0.9743 | +0.4% |
+| **Dice Coefficient** | 0.6733 | 0.7144 | +6.1% |
+| **IoU** | 0.5127 | 0.5635 | +9.9% |
+| **Sensitivity** | 0.8321 | 0.8370 | +0.6% |
+| **Specificity** | 0.9784 | 0.9819 | +0.4% |
 
 The most significant improvements were observed in **Dice and IoU**, indicating better spatial localization and boundary delineation of neovascularization regions after GAN-based augmentation.
 
@@ -333,12 +383,12 @@ The most significant improvements were observed in **Dice and IoU**, indicating 
 
 The pixel-level confusion matrix of the GAN-augmented U-Net contained:
 
-| Classification           |     Count |
-| ------------------------ | --------: |
-| **True Negatives (TN)**  | 7,432,447 |
-| **False Positives (FP)** |   134,927 |
-| **False Negatives (FN)** |    67,181 |
-| **True Positives (TP)**  |   229,765 |
+| **Classification** | **Count** |
+|---|---:|
+| **True Negatives (TN)** | 7,432,447 |
+| **False Positives (FP)** | 134,927 |
+| **False Negatives (FN)** | 67,181 |
+| **True Positives (TP)** | 229,765 |
 
 The results demonstrate that the model correctly classified the majority of non-neovascular pixels while detecting a substantial proportion of neovascularization pixels.
 
@@ -375,13 +425,13 @@ The qualitative results also showed that the model could detect small pathologic
 
 Statistical validation was performed using **10,000 bootstrap iterations** to calculate **95% confidence intervals**.
 
-| Metric               |   Mean | 95% Confidence Interval |
-| -------------------- | -----: | ----------------------: |
-| **Accuracy**         | 0.9743 |        [0.9660, 0.9827] |
-| **Dice Coefficient** | 0.7144 |        [0.6802, 0.7486] |
-| **IoU**              | 0.5634 |        [0.5210, 0.6058] |
-| **Sensitivity**      | 0.8369 |        [0.7927, 0.8811] |
-| **Specificity**      | 0.9819 |        [0.9777, 0.9861] |
+| **Metric** | **Mean** | **95% Confidence Interval** |
+|---|---:|---:|
+| **Accuracy** | 0.9743 | [0.9660, 0.9827] |
+| **Dice Coefficient** | 0.7144 | [0.6802, 0.7486] |
+| **IoU** | 0.5634 | [0.5210, 0.6058] |
+| **Sensitivity** | 0.8369 | [0.7927, 0.8811] |
+| **Specificity** | 0.9819 | [0.9777, 0.9861] |
 
 The confidence intervals demonstrate that the model maintained consistent performance across the independent test set.
 
@@ -440,12 +490,12 @@ Future improvements will focus on:
 
 # Technologies Used
 
-| Category                    | Technologies                                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Programming**             | Python                                                                                           |
-| **Deep Learning**           | PyTorch, U-Net, Pix2PixHD                                                                        |
-| **Computer Vision**         | OpenCV                                                                                           |
-| **Image Processing**        | Green Channel Extraction, CLAHE                                                                  |
-| **Annotation**              | CVAT                                                                                             |
-| **Development Environment** | Google Colab                                                                                     |
-| **Evaluation**              | Accuracy, Dice, IoU, Sensitivity, Specificity, ROC-AUC, Precision-Recall, FID, SSIM, PSNR, LPIPS |
+| **Category** | **Technologies** |
+|---|---|
+| **Programming** | Python |
+| **Deep Learning** | PyTorch, U-Net, Pix2PixHD |
+| **Computer Vision** | OpenCV |
+| **Image Processing** | Green Channel Extraction, CLAHE |
+| **Annotation** | CVAT |
+| **Development Environment** | Google Colab |
+| **Evaluation** | Accuracy, Dice, IoU, Sensitivity, Specificity, ROC-AUC, Precision-Recall, FID, SSIM, PSNR, LPIPS |
