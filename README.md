@@ -86,6 +86,9 @@ Ground Truth Mask       Pix2PixHD GAN
                                |
                                v
                     Performance Evaluation
+```
+markdown
+---
 
 ## Dataset
 
