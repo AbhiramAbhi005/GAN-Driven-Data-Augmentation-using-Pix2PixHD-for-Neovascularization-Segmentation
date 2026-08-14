@@ -178,3 +178,274 @@ Pix2PixHD Generator
      |
      v
 Synthetic Fundus Image
+```
+# GAN-Augmented Dataset
+
+A total of **100 synthetic fundus images** were generated using **Pix2PixHD**.
+
+These synthetic images were combined with the **105 real training images**, resulting in a total training dataset of **205 images**.
+
+```text
+105 Real Images
+       |
+       +------------------+
+                          |
+                          v
+                 GAN-Augmented Dataset
+                          ^
+                          |
+       +------------------+
+       |
+100 Synthetic Images
+       |
+       v
+    Pix2PixHD
+```
+
+The synthetic images were used to increase the diversity of retinal appearance and provide additional examples of vascular structures without requiring additional manual annotations.
+
+---
+
+# U-Net Segmentation
+
+The GAN-augmented dataset was used to train a **U-Net semantic segmentation model** for neovascularization localization.
+
+U-Net was selected because its encoder-decoder architecture is well suited for biomedical image segmentation and can preserve fine spatial details through **skip connections**.
+
+The model takes a preprocessed retinal fundus image as input and produces a **pixel-level segmentation mask** identifying neovascularization regions.
+
+```text
+Fundus Image
+     |
+     v
+   U-Net
+     |
+     v
+Predicted Segmentation Mask
+     |
+     v
+Neovascularization Region
+```
+
+The U-Net model was trained for **20 epochs** using the GAN-augmented dataset.
+
+The segmentation model was evaluated on **30 independent real fundus images** that were not used during training or synthetic image generation.
+
+---
+
+# Baseline and GAN-Augmented Comparison
+
+To determine the effectiveness of Pix2PixHD-based augmentation, two U-Net models were compared.
+
+## Baseline U-Net
+
+The baseline model was trained using only the **105 real fundus images**.
+
+## GAN-Augmented U-Net
+
+The augmented model was trained using:
+
+* **105** real fundus images
+* **100** Pix2PixHD-generated synthetic images
+* **Total: 205 training images**
+
+Both models used the same:
+
+* U-Net architecture
+* Training procedure
+* Loss functions
+* Evaluation test set
+
+This controlled comparison was performed to determine whether the addition of GAN-generated images improved segmentation performance.
+
+---
+
+# Evaluation Metrics
+
+The segmentation models were evaluated using the following metrics:
+
+| Metric                                   | Description                                                                                                                            |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Accuracy**                             | Measures the overall percentage of correctly classified pixels.                                                                        |
+| **Dice Coefficient**                     | Measures the spatial overlap between the predicted segmentation and the ground-truth mask.                                             |
+| **Intersection over Union (IoU)**        | Measures the intersection between predicted and ground-truth regions relative to their union.                                          |
+| **Sensitivity**                          | Measures the ability of the model to correctly detect neovascularization pixels.                                                       |
+| **Specificity**                          | Measures the ability of the model to correctly identify non-neovascular pixels.                                                        |
+| **ROC-AUC**                              | Measures the model's ability to distinguish between neovascular and non-neovascular pixels across different classification thresholds. |
+| **Precision-Recall / Average Precision** | Evaluates performance on the minority neovascularization class, particularly under severe class imbalance.                             |
+
+---
+
+# Results
+
+The Pix2PixHD generator produced synthetic fundus images with good structural and perceptual similarity.
+
+The main synthesis quality results were:
+
+| Metric    |          Result |
+| --------- | --------------: |
+| **PSNR**  | 29.40 ± 1.73 dB |
+| **SSIM**  | 0.7948 ± 0.0217 |
+| **MSE**   |   81.49 ± 40.09 |
+| **MAE**   |     6.16 ± 1.39 |
+| **LPIPS** | 0.1575 ± 0.0398 |
+| **FID**   |           57.45 |
+
+These results indicate that the generated images maintained anatomical structure and realistic visual characteristics while introducing additional variation into the training data.
+
+---
+
+# U-Net Segmentation Results
+
+The U-Net model trained using the GAN-augmented dataset achieved the following results on the independent test set:
+
+| Metric                | Mean ± Standard Deviation |
+| --------------------- | ------------------------: |
+| **Accuracy**          |           0.9743 ± 0.0089 |
+| **Dice Coefficient**  |           0.7144 ± 0.0912 |
+| **IoU**               |           0.5635 ± 0.1023 |
+| **Sensitivity**       |           0.8370 ± 0.0734 |
+| **Specificity**       |           0.9819 ± 0.0048 |
+| **ROC-AUC**           |                    0.9540 |
+| **Average Precision** |                    0.7534 |
+
+The results demonstrate that the model achieved strong pixel-level classification and reliable detection of neovascularization while maintaining very high specificity.
+
+---
+
+# Baseline vs GAN-Augmented Performance
+
+The comparison between the baseline U-Net and GAN-augmented U-Net demonstrated improvements across all major segmentation metrics.
+
+| Metric               | Baseline U-Net | U-Net + Pix2PixHD | Relative Improvement |
+| -------------------- | -------------: | ----------------: | -------------------: |
+| **Accuracy**         |         0.9704 |            0.9743 |                +0.4% |
+| **Dice Coefficient** |         0.6733 |            0.7144 |                +6.1% |
+| **IoU**              |         0.5127 |            0.5635 |                +9.9% |
+| **Sensitivity**      |         0.8321 |            0.8370 |                +0.6% |
+| **Specificity**      |         0.9784 |            0.9819 |                +0.4% |
+
+The most significant improvements were observed in **Dice and IoU**, indicating better spatial localization and boundary delineation of neovascularization regions after GAN-based augmentation.
+
+---
+
+# Confusion Matrix Analysis
+
+The pixel-level confusion matrix of the GAN-augmented U-Net contained:
+
+| Classification           |     Count |
+| ------------------------ | --------: |
+| **True Negatives (TN)**  | 7,432,447 |
+| **False Positives (FP)** |   134,927 |
+| **False Negatives (FN)** |    67,181 |
+| **True Positives (TP)**  |   229,765 |
+
+The results demonstrate that the model correctly classified the majority of non-neovascular pixels while detecting a substantial proportion of neovascularization pixels.
+
+---
+
+# Training and Convergence Analysis
+
+The U-Net model was trained for **20 epochs** to analyze convergence and generalization.
+
+The training and validation curves showed stable convergence, with both accuracy and loss following similar trends.
+
+The training and validation accuracy remained close throughout training, indicating that the model did not exhibit significant overfitting.
+
+The validation IoU and Dice scores also showed an overall increasing trend during training, demonstrating progressive improvement in spatial segmentation performance.
+
+---
+
+# Qualitative Results
+
+Qualitative analysis was performed by comparing:
+
+1. Input fundus image
+2. Ground-truth neovascularization mask
+3. Predicted segmentation mask
+4. Overlay of the prediction on the original fundus image
+
+The predicted segmentation masks demonstrated the ability to identify irregular neovascular structures and maintain close spatial correspondence with expert annotations.
+
+The qualitative results also showed that the model could detect small pathological regions while maintaining relatively low false-positive predictions in surrounding healthy retinal tissue.
+
+---
+
+# Statistical Validation
+
+Statistical validation was performed using **10,000 bootstrap iterations** to calculate **95% confidence intervals**.
+
+| Metric               |   Mean | 95% Confidence Interval |
+| -------------------- | -----: | ----------------------: |
+| **Accuracy**         | 0.9743 |        [0.9660, 0.9827] |
+| **Dice Coefficient** | 0.7144 |        [0.6802, 0.7486] |
+| **IoU**              | 0.5634 |        [0.5210, 0.6058] |
+| **Sensitivity**      | 0.8369 |        [0.7927, 0.8811] |
+| **Specificity**      | 0.9819 |        [0.9777, 0.9861] |
+
+The confidence intervals demonstrate that the model maintained consistent performance across the independent test set.
+
+---
+
+# Clinical Significance
+
+The results demonstrate that **Pix2PixHD-based data augmentation** can improve neovascularization segmentation when only a limited number of annotated fundus images are available.
+
+The improvement in Dice and IoU indicates better localization of pathological regions, while the high sensitivity and specificity demonstrate the model's ability to detect neovascularization while limiting false-positive predictions.
+
+The proposed framework can potentially support applications such as:
+
+* Automated diabetic retinopathy screening
+* Neovascularization localization
+* Disease monitoring
+* Clinical decision support
+* Treatment planning assistance
+
+> **Note:** The system is intended as a clinical decision-support tool rather than a replacement for ophthalmologist evaluation.
+
+---
+
+# Conclusion
+
+This project demonstrated a **GAN-driven data augmentation framework combining Pix2PixHD and U-Net** for neovascularization segmentation in proliferative diabetic retinopathy.
+
+Pix2PixHD generated **100 synthetic fundus images** from retinal vessel masks, increasing the training dataset from **105 real images to 205 images**.
+
+The GAN-augmented U-Net achieved:
+
+* **Dice Coefficient:** 0.7144
+* **IoU:** 0.5635
+* **Dice Improvement:** 6.1%
+* **IoU Improvement:** 9.9%
+
+compared with baseline U-Net training using only real images.
+
+The results demonstrate that GAN-generated synthetic images can provide useful additional training diversity and improve segmentation performance under limited-data conditions.
+
+---
+
+# Future Work
+
+Future improvements will focus on:
+
+* Exploring advanced architectures such as **U-Net++** and transformer-based segmentation models.
+* Improving segmentation of extremely faint and low-contrast neovascularization.
+* Integrating fundus photography with **Optical Coherence Tomography (OCT)** for multimodal analysis.
+* Performing cross-dataset validation using external datasets from different geographic regions and imaging protocols.
+* Applying **Explainable AI (XAI)** techniques to improve clinical interpretability.
+* Conducting prospective clinical trials using real-world screening populations.
+* Evaluating clinical outcomes, referral patterns, treatment support, and cost-effectiveness.
+
+---
+
+# Technologies Used
+
+| Category                    | Technologies                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Programming**             | Python                                                                                           |
+| **Deep Learning**           | PyTorch, U-Net, Pix2PixHD                                                                        |
+| **Computer Vision**         | OpenCV                                                                                           |
+| **Image Processing**        | Green Channel Extraction, CLAHE                                                                  |
+| **Annotation**              | CVAT                                                                                             |
+| **Development Environment** | Google Colab                                                                                     |
+| **Evaluation**              | Accuracy, Dice, IoU, Sensitivity, Specificity, ROC-AUC, Precision-Recall, FID, SSIM, PSNR, LPIPS |
